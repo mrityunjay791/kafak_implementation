@@ -1,6 +1,8 @@
 package org.example.service;
 
+import org.example.dto.EmployeeDto;
 import org.example.entity.Employee;
+import org.example.exception.EmployeeNotFoundException;
 import org.example.repository.EmployeeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,9 +19,28 @@ public class EmployeeService {
     private EmployeeRepository employeeRepository;
 
     // Example method to get all employees
-    public List<Employee> getAllEmployees() {
+    public List<EmployeeDto> getAllEmployees() {
         // Logic to retrieve all employees from the database
-        return employeeRepository.findAll();
+        List<EmployeeDto> employees = employeeRepository.findAll().stream().map(emp ->
+                new EmployeeDto(emp.getId(), emp.getName(), emp.getPosition(), emp.getSalary()))
+                .toList();
+
+        if (employees.isEmpty()) {
+            throw new EmployeeNotFoundException("No employees found in the database.");
+        }
+        return employees;
+    }
+
+    public Employee getEmployeeById(Long id) throws EmployeeNotFoundException {
+        return employeeRepository.findById(id)
+                .orElseThrow(() -> new EmployeeNotFoundException("Employee not found with id: " + id));
+    }
+
+    public void deleteEmployee(Long id) throws EmployeeNotFoundException {
+        if (!employeeRepository.existsById(id)) {
+            throw new EmployeeNotFoundException("Employee not found with id: " + id);
+        }
+        employeeRepository.deleteById(id);
     }
 
     // Example method to create a new employee
